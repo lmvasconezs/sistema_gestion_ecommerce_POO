@@ -1,4 +1,3 @@
-# sistema_gestion_ecommerce_POO
 
 # Ecommerce System – Go
 Sistema de Gestión de E-commerce desarrollado en Go para la materia de Programación Orientada a Objetos.
