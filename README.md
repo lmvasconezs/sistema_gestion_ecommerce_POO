@@ -196,7 +196,6 @@ El sistema se encuentra dividido en:
 * Utils
 * Tests
 
----
 
 ## Concurrencia
 
@@ -212,7 +211,6 @@ en los servicios:
 * CartService
 * OrderService
 
----
 
 ## Pruebas Unitarias
 
@@ -232,7 +230,6 @@ Ejecutar pruebas:
 go test ./...
 ```
 
----
 
 ## Ejecución del Proyecto
 
@@ -254,7 +251,6 @@ Servidor:
 http://localhost:8080
 ```
 
----
 
 ## Ejemplos de Uso
 
@@ -291,7 +287,6 @@ Generar pedido:
 curl -X POST http://localhost:8080/checkout
 ```
 
----
 
 ## Limitaciones Actuales
 
@@ -300,9 +295,3 @@ curl -X POST http://localhost:8080/checkout
 * No incluye autenticación de usuarios.
 * No incluye pasarela de pagos.
 * No incluye persistencia permanente.
-
----
-
-## Trabajo Académico
-
-Proyecto desarrollado como parte de la asignatura de Programación Orientada a Objetos, aplicando los conceptos estudiados durante las Unidades 1, 2, 3 y 4 del curso.
