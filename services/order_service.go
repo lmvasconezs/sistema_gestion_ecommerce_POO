@@ -9,14 +9,20 @@ package services
 import (
 	"fmt"
 	"sistema_gestion_ecommerce_POO/models"
+	"sync"
 )
 
 type OrderService struct {
+	mu     sync.Mutex
 	Orders []models.Order
 }
 
 // Crear pedido
 func (os *OrderService) CreateOrder(order models.Order) {
+	// Mutex para proteger el historial de pedidos
+	os.mu.Lock()
+	defer os.mu.Unlock()
+
 	os.Orders = append(os.Orders, order)
 }
 

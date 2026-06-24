@@ -9,14 +9,20 @@ package services
 import (
 	"fmt"
 	"sistema_gestion_ecommerce_POO/models"
+	"sync"
 )
 
 type ProductService struct {
+	mu       sync.Mutex
 	Products []models.Product
 }
 
 // Agregar producto
 func (ps *ProductService) AddProduct(product models.Product) {
+	// Mutex para proteger modificaciones concurrentes
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
+
 	ps.Products = append(ps.Products, product)
 }
 

@@ -1,14 +1,16 @@
 /*
 Autor: Luis Miguel Vasconez
-Fecha: 02/06/2026
-Descripcion: Menu principal del sistema
+Fecha: 02/06/2026 (Actualizado 23/06/2026)
+Descripcion: Entrypoint de la API REST del sistema
 */
 
 package main
 
 import (
 	"fmt"
+	"net/http"
 
+	"sistema_gestion_ecommerce_POO/handlers"
 	"sistema_gestion_ecommerce_POO/models"
 	"sistema_gestion_ecommerce_POO/services"
 )
@@ -23,140 +25,91 @@ func main() {
 	// Contador de pedidos
 	orderID := 1
 
-	// Productos iniciales
-	productService.AddProduct(
-		models.NewProduct(
-			1,
-			"Laptop",
-			1200,
-			10,
-			"Electronica",
-		),
-	)
+	// Productos iniciales (carga quemada igual que en consola)
+	productService.AddProduct(models.NewProduct(1, "Laptop", 1200, 10, "Electronica"))
+	productService.AddProduct(models.NewProduct(2, "Mouse", 25, 20, "Accesorios"))
+	productService.AddProduct(models.NewProduct(3, "Teclado", 45, 15, "Accesorios"))
+	productService.AddProduct(models.NewProduct(4, "Monitor", 250, 8, "Electronica"))
 
-	productService.AddProduct(
-		models.NewProduct(
-			2,
-			"Mouse",
-			25,
-			20,
-			"Accesorios",
-		),
-	)
+	// Inicialización de Handlers
+	productHandler := handlers.ProductHandler{
+		ProductService: &productService,
+	}
+	
+	cartHandler := handlers.CartHandler{
+		CartService:    &cartService,
+		ProductService: &productService,
+	}
 
-	productService.AddProduct(
-		models.NewProduct(
-			3,
-			"Teclado",
-			45,
-			15,
-			"Accesorios",
-		),
-	)
+	orderHandler := handlers.OrderHandler{
+		OrderService: &orderService,
+		CartService:  &cartService,
+		OrderID:      &orderID, // Pasamos por referencia para incrementar en cada compra
+	}
 
-	productService.AddProduct(
-		models.NewProduct(
-			4,
-			"Monitor",
-			250,
-			8,
-			"Electronica",
-		),
-	)
-
-	for {
-
-		fmt.Println("\n===== SISTEMA DE E-COMMERCE =====")
-		fmt.Println("1. Ver productos")
-		fmt.Println("2. Buscar producto")
-		fmt.Println("3. Añadir al carrito")
-		fmt.Println("4. Ver carrito")
-		fmt.Println("5. Comprar")
-		fmt.Println("6. Ver pedidos")
-		fmt.Println("7. Salir")
-
-		fmt.Print("\nSeleccione una opcion: ")
-
-		var option int
-		fmt.Scanln(&option)
-
-		switch option {
-
-		case 1:
-
-			fmt.Println("\n===== LISTA DE PRODUCTOS =====")
-			productService.ShowProducts()
-
-		case 2:
-
-			var productName string
-
-			fmt.Print("Ingrese el nombre del producto: ")
-			fmt.Scanln(&productName)
-
-			productService.Search(productName)
-
-		case 3:
-
-			var productName string
-
-			fmt.Print("Ingrese el nombre del producto: ")
-			fmt.Scanln(&productName)
-
-			product, found := productService.FindProductByName(productName)
-
-			if !found {
-
-				fmt.Println("Producto no encontrado.")
-				break
-			}
-
-			item := models.NewCartItem(product, 1)
-
-			cartService.AddToCart(item)
-
-			fmt.Println("Producto añadido al carrito.")
-
-		case 4:
-
-			cartService.ShowCart()
-
-		case 5:
-
-			if len(cartService.Items) == 0 {
-
-				fmt.Println("El carrito está vacío.")
-				break
-			}
-
-			total := cartService.CalculateTotal()
-
-			order := models.NewOrder(
-				orderID,
-				cartService.Items,
-				total,
-			)
-
-			orderService.CreateOrder(order)
-
-			orderID++
-
-			cartService.ClearCart()
-
-			fmt.Println("Pedido generado correctamente.")
-
-		case 6:
-
-			orderService.ShowOrders()
-
-		case 7:
-
-			fmt.Println("Gracias por utilizar el sistema.")
-			return
-
-		default:
-
-			fmt.Println("Opción inválida.")
+	// Configuración de Rutas (Endpoints HTTP)
+	http.HandleFunc("/products", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			productHandler.GetProducts(w, r)
+		} else if r.Method == http.MethodPost {
+			productHandler.CreateProduct(w, r)
+		} else {
+			http.Error(w, "Método no soportado", http.StatusMethodNotAllowed)
 		}
+	})
+
+	http.HandleFunc("/products/search", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			productHandler.SearchProduct(w, r)
+		} else {
+			http.Error(w, "Método no soportado", http.StatusMethodNotAllowed)
+		}
+	})
+
+	http.HandleFunc("/cart", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			cartHandler.GetCart(w, r)
+		} else if r.Method == http.MethodPost {
+			cartHandler.AddToCart(w, r)
+		} else if r.Method == http.MethodDelete {
+			cartHandler.ClearCart(w, r)
+		} else {
+			http.Error(w, "Método no soportado", http.StatusMethodNotAllowed)
+		}
+	})
+
+	http.HandleFunc("/checkout", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			orderHandler.Checkout(w, r)
+		} else {
+			http.Error(w, "Método no soportado", http.StatusMethodNotAllowed)
+		}
+	})
+
+	http.HandleFunc("/orders", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			orderHandler.GetOrders(w, r)
+		} else {
+			http.Error(w, "Método no soportado", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Iniciar Servidor
+	fmt.Println("=================================================")
+	fmt.Println("Servidor API REST iniciado en http://localhost:8080")
+	fmt.Println("Rutas disponibles:")
+	fmt.Println("- GET    /products")
+	fmt.Println("- POST   /products")
+	fmt.Println("- GET    /products/search?name=Producto")
+	fmt.Println("- GET    /cart")
+	fmt.Println("- POST   /cart")
+	fmt.Println("- DELETE /cart")
+	fmt.Println("- GET    /orders")
+	fmt.Println("- POST   /checkout")
+	fmt.Println("=================================================")
+	
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		fmt.Println("Error al iniciar el servidor:", err)
 	}
 }
